@@ -83,42 +83,20 @@ def best_five(cards):
             best = score
     return best
 
-# def estimate_strength(my_cards, board_cards, iterations=50):
-#     known = my_cards + board_cards
-#     unknown = [c for c in DECK if c not in known]
-#     my_hand = [parse_card(c) for c in my_cards]
-#     board = [parse_card(c) for c in board_cards]
-
-#     wins = 0
-#     for _ in range(iterations):
-#         sampled = np.random.choice(unknown, 5 - len(board) + 3, replace=False)
-#         opp_cards = [parse_card(c) for c in sampled[:3]]
-#         rem_board = [parse_card(c) for c in sampled[3:]]
-#         full_board = board + rem_board
-
-#         my_best = best_five(my_hand + full_board)
-#         opp_best = best_five(opp_cards + full_board)
-
-#         if my_best > opp_best:
-#             wins += 1
-#         elif my_best == opp_best:
-#             wins += 0.5
-
-#     return wins / iterations
-def estimate_strength(my_cards, board_cards, iterations=30):
-    parsed_my = [parse_card(c) for c in my_cards]
-    parsed_board = [parse_card(c) for c in board_cards]
-    known = set(my_cards + board_cards)
+def estimate_strength(my_cards, board_cards, iterations=100):
+    known = my_cards + board_cards
     unknown = [c for c in DECK if c not in known]
+    my_hand = [parse_card(c) for c in my_cards]
+    board = [parse_card(c) for c in board_cards]
 
     wins = 0
     for _ in range(iterations):
-        sampled = np.random.choice(unknown, 5 - len(board_cards) + 3, replace=False)
+        sampled = np.random.choice(unknown, 5 - len(board) + 3, replace=False)
         opp_cards = [parse_card(c) for c in sampled[:3]]
         rem_board = [parse_card(c) for c in sampled[3:]]
-        full_board = parsed_board + rem_board
+        full_board = board + rem_board
 
-        my_best = best_five(parsed_my + full_board)
+        my_best = best_five(my_hand + full_board)
         opp_best = best_five(opp_cards + full_board)
 
         if my_best > opp_best:
@@ -127,7 +105,6 @@ def estimate_strength(my_cards, board_cards, iterations=30):
             wins += 0.5
 
     return wins / iterations
-
 
 def classify_hand(hand):
     ranks = sorted([parse_card(c)[0] for c in hand], reverse=True)
@@ -194,9 +171,7 @@ class Player(Bot):
                 return FoldAction()
 
         # Postflop logic
-        # strength = estimate_strength(my_cards, board_cards, iterations=100)
-        iters = 10 if street == 0 else 20 if street == 3 else 30
-        strength = estimate_strength(my_cards, board_cards, iterations=10)
+        strength = estimate_strength(my_cards, board_cards, iterations=100)
         pot_odds = continue_cost / (pot_total + 1e-9)
         bluff_chance = 0.15 if self.rounds_played > 5 and self.opp_aggression / self.rounds_played > 0.5 else 0.05
 
